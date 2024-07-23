@@ -1,0 +1,59 @@
+<nav class="navbar navbar-expand-lg bg-body-tertiary">
+    <div class="container-fluid" id="header_vue">
+        <a class="navbar-brand" href="/"><img :src="client_image" :alt="client_name" width="40" height="40" class="d-inline-block align-middle"> <span class="align-middle">{{ client_name }}</span></a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+            data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link" href="/client" role="button">申請授權端</a>
+                </li>
+            </ul>
+            
+            <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                <li v-if="!isLogin" class="nav-item">
+                    <a class="nav-link" href="/entry.htm">登入</a>
+                </li>
+                <li v-else class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <img v-if="user_photo" :src="user_photo" alt="user_photo" width="30" height="30" class="rounded-circle">
+                        <span v-else class="align-middle">Hi, {{ user_name }}</span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/profile.htm">個人資料</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="/logout.htm" @click="logout">登出</a></li>
+                    </ul>
+                </li>
+            </ul>
+            <form class="d-flex" role="search">
+                <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+                <button class="btn btn-outline-success" type="submit">Search</button>
+            </form>
+        </div>
+    </div>
+    <script type="text/javascript">
+        const header_app = Vue.createApp({
+            data() {
+                return {
+                    isLogin: getCookies('user_id') != null,
+                    client_name: AuthApp.default_client_name,
+                    client_image: AuthApp.default_client_image,
+                    user_name: '',
+                    user_photo: ''
+                }
+            },
+            mounted() {
+                if (this.isLogin) {
+                    AuthApp.requestAccount(() => {
+                        this.user_name = AuthApp.account.name;
+                        this.user_photo = AuthApp.account.photo;
+                    });
+                }
+            }
+        }).mount('#header_vue');
+    </script>
+</nav>

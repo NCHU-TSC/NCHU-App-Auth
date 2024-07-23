@@ -26,6 +26,7 @@ class AuthApp {
     static params = new URLSearchParams(window.location.search);
     static authID = AuthApp.params.get('auth_id') || "none";
     static default_client_name = "NCHU App Authenticator";
+    static default_client_image = "/internal/brand/nchuapp.png";
     static client_name = "NCHU App Authenticator";
     static client_image = "/internal/brand/nchuapp.png";
 
