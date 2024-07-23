@@ -39,7 +39,7 @@
         const header_app = Vue.createApp({
             data() {
                 return {
-                    isLogin: getCookies('user_id') != null,
+                    isLogin: getCookie('user_id') != null,
                     client_name: AuthApp.default_client_name,
                     client_image: AuthApp.default_client_image,
                     user_name: '',
