@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="zh-tw" class="h-100" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Account Manager</title>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+
+    <link rel="stylesheet" href="/external/bootstrap/bootstrap.css">
+    <link rel="stylesheet" href="/external/bootstrap/font/bootstrap-icons.css">
+    <script type="text/javascript" src="/external/JQuery/jquery.js"></script>
+    <script type="text/javascript" src="/external/JQuery/jquery.cookie.js"></script>
+    <script type="text/javascript" src="/external/bootstrap/bootstrap.js"></script>
+    <script type="text/javascript" src="/external/vue/vue.js"></script>
+
+    <link rel="stylesheet" href="/internal/css/common.css">
+    <link rel="stylesheet" href="/internal/css/profile.css">
+    <script type="text/javascript" src="/internal/js/utility.js"></script>
+    <script type="text/javascript" src="/internal/js/define.js"></script>
+</head>
+
+<body class="d-flex flex-column h-100">
+    <main class="flex-grow-1 main cflex-center-center p-5">
+        <nav class="m-2 w-100 d-flex justify-content-between">
+            <span class="fs-1">帳號管理</span>
+            <div>
+                <button class="btn btn-primary" @click="getAccounts">重新整理</button>
+            </div>
+        </nav>
+        <hr class="w-100">
+        <section class="m-2 container flex-grow-1 overflow-auto">
+            <div class="row">
+                <div class="col-4">
+                    <aside class="fs-5">
+                        <ul class="btn-toggle-nav list-unstyled">
+                            <li v-for="(account, idx) in accounts" class="fs-5">
+                                <a href="#" class="btn rounded" @click="now_account_idx = idx; getAccount(now_account_idx)" :class="{'active': idx === now_account_idx}">
+                                    {{ account.login_id || account.id }}
+                                </a>
+                            </li>
+                            <li v-if="accounts.length === 0" class="fs-5">無任何帳戶可供顯示</li>
+                        </ul>
+                    </aside>
+                </div>
+                <div class="col-8 p-3">
+                    <article v-if="now_account_idx >= 0">
+                        <h3>帳戶資訊</h3>
+                        <hr class="w-100">
+                        <form>
+                            <div class="mb-3 container">
+                                <div class="row">
+                                    <div class="col-8">
+                                        <div class="mb-3">
+                                            <label for="login_id" class="form-label">登入帳號</label>
+                                            <input type="text" class="form-control" id="login_id" v-model="accounts[now_account_idx].login_id">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="name" class="form-label">姓名</label>
+                                            <input type="text" class="form-control" id="name" v-model="accounts[now_account_idx].name">
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="mb-3">
+                                            <label for="photo" class="form-label">照片</label>
+                                            <img :src="accounts[now_account_idx].photo" class="img-thumbnail" alt="photo" style="width: 100px; height: 100px;">
+                                        </div>
+                                        <div class="mb-3">
+                                            <input type="file" class="form-control" id="photo" @change="previewImage">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3 container">
+                                <div class="row">
+                                    <div class="col-8">
+                                        <label for="email" class="form-label">電子郵件</label>
+                                        <input type="email" class="form-control" id="email" v-model="accounts[now_account_idx].email">
+                                    </div>
+                                    <div class="col-4">
+                                        <label for="valid_email" class="form-label">電子郵件驗證狀態</label>
+                                        <select class="form-control" id="valid_email" v-model="accounts[now_account_idx].valid_email" disabled>
+                                            <option value="" disabled>請選擇</option>
+                                            <option value="false">未驗證</option>
+                                            <option value="true">已驗證</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- For Gender -->
+                            <div class="mb-3 container">
+                                <div class="row">
+                                    <div class="col-8">
+                                        <label for="gender" class="form-label">性別</label>
+                                        <div class="rflex-center-center">
+                                            <select class="form-control" id="gender" v-model="accounts[now_account_idx].gender">
+                                                <option value="Unselected" disabled>請選擇</option>
+                                                <option value="Male">男</option>
+                                                <option value="Female">女</option>
+                                                <option :value="displayGenderOther(accounts[now_account_idx].gender)">{{ displayGenderOther(accounts[now_account_idx].gender) }}</option>
+                                            </select>
+                                            <div v-if="!gender_basic.includes(accounts[now_account_idx].gender)" class="vr ms-2 me-2"></div>
+                                            <input v-if="!gender_basic.includes(accounts[now_account_idx].gender)" type="text" class="form-control" id="gender_other" v-model="accounts[now_account_idx].gender">
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="mb-3">
+                                            <label for="role" class="form-label">角色</label>
+                                            <select class="form-control" id="role" v-model="accounts[now_account_idx].role">
+                                                <option value="" disabled>請選擇</option>
+                                                <option value="Manager">管理員</option>
+                                                <option value="User">使用者</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3 container">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <label for="department" class="form-label">系所</label>
+                                        <input type="text" class="form-control" id="department" v-model="accounts[now_account_idx].department">
+                                    </div>
+                                    <div class="col-6">
+                                        <label for="grade" class="form-label">年級</label>
+                                        <input type="text" class="form-control" id="grade" v-model="accounts[now_account_idx].grade">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="id" class="form-label">帳戶辨識碼</label>
+                                <input type="text" class="form-control" id="id" v-model="accounts[now_account_idx].id" readonly disabled>
+                            </div>
+                            <div class="mb-3">
+                                <label for="res_token" class="form-label">資源存取令牌</label>
+                                <input type="text" class="form-control" id="res_token" v-model="accounts[now_account_idx].res_token" readonly disabled>
+                            </div>
+                            <div class="mb-3">
+                                <label for="google_id" class="form-label">Google 辨識碼</label>
+                                <input type="text" class="form-control" id="google_id" v-model="accounts[now_account_idx].google_id" readonly disabled>
+                            </div>
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-primary" @click="updateAccount(now_account_idx)">更新</button>
+                                <span class="mx-2"></span>
+                                <button type="button" class="btn btn-danger" @click="deleteAccount(now_account_idx)">刪除</button>
+                            </div>
+                        </form>
+                    </article>
+                    <article v-else></article>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script type="text/javascript">
+        AuthApp.verifyAccount(noop, AuthApp.verifying_redirect);
+
+        const accounts_vue = Vue.createApp({
+            data() {
+                return {
+                    accounts: [],
+                    now_account_idx: -2,
+                    gender_basic: gender_basic,
+                    displayGenderOther: displayGenderOther
+                };
+            },
+            methods: {
+                getAccounts() {
+                    const url = AuthApp.BACKEND_HOST + '/manage/account/res.pye?type=all_accounts';
+                    XHR_GET(url).then((data) => {
+                        this.now_account_idx = -2;
+                        this.accounts = [];
+                        for (let info of data.data.accounts) {
+                            this.accounts.push({
+                                id: info.ID,
+                                res_token: '',
+                                login_id: info.Login_ID,
+                                name: '',
+                                email: '',
+                                valid_email: '',
+                                gender: '',
+                                role: '',
+                                photo: '',
+                                google_id: ''
+                            });
+                        }
+                    }).catch((error) => {
+                        console.error(error);
+                    });
+                },
+                getAccount(idx) {
+                    const url = AuthApp.BACKEND_HOST + '/manage/account/res.pye?type=account_info&account_id=' + this.accounts[idx].id;
+                    XHR_GET(url).then((data) => {
+                        this.accounts[idx].res_token = data.data.res_token;
+                        this.accounts[idx].login_id = data.data.login_id;
+                        this.accounts[idx].name = data.data.name;
+                        this.accounts[idx].email = data.data.email;
+                        this.accounts[idx].valid_email = data.data.valid_email;
+                        this.accounts[idx].gender = data.data.gender;
+                        this.accounts[idx].department = data.data.department;
+                        this.accounts[idx].grade = data.data.grade;
+                        this.accounts[idx].role = data.data.role;
+                        this.accounts[idx].photo = data.data.photo;
+                        this.accounts[idx].google_id = data.data.google_id;
+                    }).catch((error) => {
+                        console.error(error);
+                    });
+                },
+                updateAccount(idx) {
+                    const url = AuthApp.BACKEND_HOST + '/manage/account/update.pye';
+                    const data = {
+                        id: this.accounts[idx].id,
+                        login_id: this.accounts[idx].login_id,
+                        name: this.accounts[idx].name,
+                        email: this.accounts[idx].email,
+                        gender: this.accounts[idx].gender,
+                        department: this.accounts[idx].department,
+                        grade: this.accounts[idx].grade,
+                        role: this.accounts[idx].role,
+                        photo: this.accounts[idx].photo
+                    };
+
+                    XHR_POST(url, data).then((data) => {
+                        this.getAccount(idx);
+                    }).catch((error) => {
+                        console.error(error);
+                    });
+                },
+                deleteAccount(idx) {
+                    const url = AuthApp.BACKEND_HOST + '/manage/account/delete.pye?account_id=' + this.accounts[idx].id;
+                    XHR_GET(url).then((data) => {
+                        this.now_account_idx = -2;
+                        this.accounts.splice(idx, 1);
+                    }).catch((error) => {
+                        console.error(error);
+                    });
+                },
+                previewImage(event) {
+                    const file = event.target.files[0];
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        if(this.now_account_idx >= 0) {
+                            this.accounts[this.now_account_idx].photo = e.target.result;
+                        }
+                    };
+
+                    reader.readAsDataURL(file);
+                }
+            },
+            mounted() {
+                this.getAccounts();
+            }
+        });
+
+        const accounts_app = accounts_vue.mount('main');
+    </script>
+
+    <footer id="footer-home">
+        <script>$("#footer-home").load("/internal/html/footer.htm");</script>
+    </footer>
+
+    <style>
+        body {
+            background-image: url('/external/freepik/abstract-yellow-color-modern-wave-style.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+    </style>
+</body>
+</html>

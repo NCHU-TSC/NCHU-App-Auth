@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-tw" class="h-100" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Client Manager</title>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+
+    <link rel="stylesheet" href="/external/bootstrap/bootstrap.css">
+    <link rel="stylesheet" href="/external/bootstrap/font/bootstrap-icons.css">
+    <script type="text/javascript" src="/external/JQuery/jquery.js"></script>
+    <script type="text/javascript" src="/external/JQuery/jquery.cookie.js"></script>
+    <script type="text/javascript" src="/external/bootstrap/bootstrap.js"></script>
+    <script type="text/javascript" src="/external/vue/vue.js"></script>
+
+    <link rel="stylesheet" href="/internal/css/common.css">
+    <link rel="stylesheet" href="/internal/css/profile.css">
+    <script type="text/javascript" src="/internal/js/utility.js"></script>
+    <script type="text/javascript" src="/internal/js/define.js"></script>
+</head>
+
+<body class="d-flex flex-column h-100">
+    <main class="flex-grow-1 main cflex-center-center p-5">
+        <nav class="m-2 w-100 d-flex justify-content-between">
+            <span class="fs-1">授權管理</span>
+            <div>
+                <button class="btn btn-primary" @click="getClients">重新整理</button>
+            </div>
+        </nav>
+        <hr class="w-100">
+        <section class="m-2 container flex-grow-1 overflow-auto">
+            <div class="row">
+                <div class="col-4">
+                    <aside class="fs-5">
+                        <ul class="btn-toggle-nav list-unstyled">
+                            <li v-for="(client, idx) in clients" class="fs-5">
+                                <a href="#" class="btn rounded" @click="now_client_idx = idx; getClient(now_client_idx)" :class="{'active': idx === now_client_idx}">
+                                    {{ client.name || client.id }}
+                                </a>
+                            </li>
+                            <li v-if="clients.length === 0" class="fs-5">無任何授權可供顯示</li>
+                        </ul>
+                    </aside>
+                </div>
+                <div class="col-8 p-3">
+                    <article v-if="now_client_idx >= 0">
+                        <h3>授權端資訊</h3>
+                        <hr class="w-100">
+                        <form>
+                            <div class="mb-3">
+                                <label for="client_name" class="form-label">名稱</label>
+                                <input type="text" class="form-control" id="client_name" v-model="clients[now_client_idx].name">
+                            </div>
+                            <div class="mb-3">
+                                <div class="row">
+                                    <div class="col-9">
+                                        <label for="client_image" class="form-label">圖片</label>
+                                        <!-- For upload image and preview -->
+                                        <input type="file" class="form-control" id="client_image" @change="previewImage($event)">
+                                    </div>
+                                    <div class="col-3">
+                                        <img :src="clients[now_client_idx].image" class="img-thumbnail" alt="Preview" style="max-width: 175px; max-height: 175px;">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="client_id" class="form-label">授權端辨識碼</label>
+                                <input type="text" class="form-control" id="client_id" v-model="clients[now_client_idx].id" readonly disabled>
+                            </div>
+                            <div class="mb-3">
+                                <label for="client_token" class="form-label">資源存取令牌</label>
+                                <input type="text" class="form-control" id="client_token" v-model="clients[now_client_idx].token" readonly disabled>
+                            </div>
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="mb-3">
+                                        <label for="client_state" class="form-label">狀態</label>
+                                        <select class="form-control" id="client_state" v-model="clients[now_client_idx].state">
+                                            <option value="Pending">待審核</option>
+                                            <option value="Approved">已核准</option>
+                                            <option value="Rejected">已拒絕</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="mb-3">
+                                        <label for="client_create_time" class="form-label">建立時間</label>
+                                        <input type="text" class="form-control" id="client_create_time" v-model="clients[now_client_idx].create_time" readonly disabled>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-primary" @click="updateClient(now_client_idx)">更新</button>
+                                <span class="mx-2"></span>
+                                <button type="button" class="btn btn-danger" @click="deleteClient(now_client_idx)">刪除</button>
+                            </div>
+                        </form>
+                    </article>
+                    <article v-else></article>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script type="text/javascript">
+        AuthApp.verifyAccount(noop, AuthApp.verifying_redirect);
+
+        const clients_vue = Vue.createApp({
+            data() {
+                return {
+                    clients: [],
+                    now_client_idx: -2
+                };
+            },
+            methods: {
+                getClients() {
+                    const url = AuthApp.BACKEND_HOST + '/manage/client/res.pye?type=all_clients';
+                    XHR_GET(url).then((data) => {
+                        this.now_client_idx = -2;
+                        this.clients = [];
+                        for (let info of data.data.clients) {
+                            this.clients.push({
+                                id: info.ID,
+                                token: "",
+                                name: info.Name,
+                                image: "", // base64 encoded image
+                                state: "",
+                                create_time: ""
+                            });
+                        }
+                    }).catch((error) => {
+                        console.error(error);
+                    });
+                },
+                getClient(idx) {
+                    const url = AuthApp.BACKEND_HOST + '/manage/client/res.pye?type=client_info&client_id=' + this.clients[idx].id;
+                    XHR_GET(url).then((data) => {
+                        this.clients[idx].token = data.data.token;
+                        this.clients[idx].name = data.data.name;
+                        this.clients[idx].image = data.data.image;
+                        this.clients[idx].state = data.data.state;
+                        this.clients[idx].create_time = data.data.create_time;
+                    }).catch((error) => {
+                        console.error(error);
+                    });
+                },
+                updateClient(idx) {
+                    const url = AuthApp.BACKEND_HOST + '/manage/client/update.pye';
+                    const data = {
+                        id: this.clients[idx].id,
+                        name: this.clients[idx].name,
+                        image: this.clients[idx].image,
+                        state: this.clients[idx].state
+                    };
+
+                    XHR_POST(url, data).then((data) => {
+                        this.getClient(idx);
+                    }).catch((error) => {
+                        console.error(error);
+                    });
+                },
+                deleteClient(idx) {
+                    const url = AuthApp.BACKEND_HOST + '/manage/client/delete.pye?client_id=' + this.clients[idx].id;
+                    XHR_GET(url).then((data) => {
+                        this.now_client_idx = -2;
+                        this.clients.splice(idx, 1);
+                    }).catch((error) => {
+                        console.error(error);
+                    });
+                },
+                previewImage(event) {
+                    const file = event.target.files[0];
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        if(this.now_client_idx < 0) {
+                            this.new_client.image = e.target.result;
+                        } else {
+                            this.clients[this.now_client_idx].image = e.target.result;
+                        }
+                    };
+
+                    reader.readAsDataURL(file);
+                }
+            },
+            mounted() {
+                this.getClients();
+            }
+        });
+
+        const clients_app = clients_vue.mount('main');
+    </script>
+
+    <footer id="footer-home">
+        <script>$("#footer-home").load("/internal/html/footer.htm");</script>
+    </footer>
+
+    <style>
+        body {
+            background-image: url('/external/freepik/abstract-yellow-color-modern-wave-style.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+    </style>
+</body>
+</html>

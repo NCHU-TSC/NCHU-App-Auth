@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-tw" class="h-100" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Settings</title>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+
+    <link rel="stylesheet" href="/external/bootstrap/bootstrap.css">
+    <link rel="stylesheet" href="/external/bootstrap/font/bootstrap-icons.css">
+    <script type="text/javascript" src="/external/JQuery/jquery.js"></script>
+    <script type="text/javascript" src="/external/JQuery/jquery.cookie.js"></script>
+    <script type="text/javascript" src="/external/bootstrap/bootstrap.js"></script>
+    <script type="text/javascript" src="/external/vue/vue.js"></script>
+
+    <link rel="stylesheet" href="/internal/css/common.css">
+    <link rel="stylesheet" href="/internal/css/profile.css">
+    <script type="text/javascript" src="/internal/js/utility.js"></script>
+    <script type="text/javascript" src="/internal/js/define.js"></script>
+</head>
+
+<body class="cflex-center-center h-100">
+    <main class="main cflex-center-center p-5">
+        <nav class="m-2 w-100 rflex-center-between">
+            <span class="fs-1">設定</span>
+            <div>
+            </div>
+        </nav>
+        <hr class="w-100">
+        <section class="m-2 container flex-grow-1 overflow-auto">
+            <div class="row">
+                <div class="col-4">
+                    <aside class="fs-3">
+                        <ul class="btn-toggle-nav list-unstyled">
+                            <menu-item :item="pages" :now_page="now_page"></menu-item>
+                        </ul>
+                    </aside>
+                </div>
+                <div class="col-8 p-3">
+                    <article v-if="now_page.value === 'general'">
+                        <h3>一般設定</h3>
+                        <hr class="w-100">
+                        <form>
+                            <div class="mb-3">
+                                <label for="loginid" class="form-label">{{ settings.loginid.label }}</label>
+                                <input type="username" class="form-control" id="loginid" placeholder="Username" v-model="settings.loginid.new_value">
+                            </div>
+                            <div class="mb-3">
+                                <label for="name" class="form-label">{{ settings.name.label }}</label>
+                                <input type="text" class="form-control" id="name" placeholder="Name" v-model="settings.name.new_value">
+                            </div>
+                            <div class="mb-3">
+                                <label for="email" class="form-label">{{ settings.email.label }}</label>
+                                <div class="mb-3 input-group">
+                                    <input type="email" class="form-control" id="email" placeholder="Email" v-model="settings.email.new_value" aria-describedby="valid_email">
+                                    <select class="form-control input-group-text" id="valid_email" v-model="valid_email" disabled>
+                                        <option value="" disabled>請選擇</option>
+                                        <option value="false">未驗證</option>
+                                        <option value="true">已驗證</option>
+                                    </select>
+                                    <button v-if="valid_email === false" class="btn btn-primary" type="button" @click="verifyEmail">驗證</button>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="gender" class="form-label">{{ settings.gender.label }}</label>
+                                <div class="rflex-center-center">
+                                    <select class="form-control" id="gender" v-model="settings.gender.new_value">
+                                        <option value="Unselected" disabled>請選擇</option>
+                                        <option value="Male">男</option>
+                                        <option value="Female">女</option>
+                                        <option :value="displayGenderOther(settings.gender.new_value)">{{ displayGenderOther(settings.gender.new_value) }}</option>
+                                    </select>
+                                    <div v-if="!gender_basic.includes(settings.gender.new_value)" class="vr ms-2 me-2"></div>
+                                    <input v-if="!gender_basic.includes(settings.gender.new_value)" type="text" class="form-control" placeholder="請輸入性別" v-model="settings.gender.new_value">
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="department" class="form-label">{{ settings.department.label }}</label>
+                                <input type="text" class="form-control" id="department" placeholder="Department" v-model="settings.department.new_value">
+                            </div>
+                            <div class="mb-3">
+                                <label for="grade" class="form-label">{{ settings.grade.label }}</label>
+                                <input type="text" class="form-control" id="grade" placeholder="Grade" v-model="settings.grade.new_value">
+                            </div>
+                            <div class="mb-3">
+                                <label for="photo" class="form-label">{{ settings.photo.label }}</label>
+                                <input type="file" class="form-control" id="photo" @change="previewImage">
+                                <img :src="settings.photo.new_value" class="img-thumbnail mt-2" alt="Photo">
+                            </div>
+                        </form>
+                    </article>
+                    <article v-else-if="now_page.value === 'security_password'">
+                        <h3>密碼設定</h3>
+                        <hr class="w-100">
+                        <form>
+                            <div class="mb-3">
+                                <label for="old_password" class="form-label">舊密碼</label>
+                                <input type="password" class="form-control" id="old_password" placeholder="Old Password">
+                            </div>
+                            <div class="mb-3">
+                                <label for="new_password" class="form-label">新密碼</label>
+                                <input type="password" class="form-control" id="new_password" placeholder="New Password">
+                            </div>
+                            <div class="mb-3">
+                                <label for="confirm_password" class="form-label">確認新密碼</label>
+                                <input type="password" class="form-control" id="confirm_password" placeholder="Confirm Password">
+                            </div>
+                        </form>
+                    </article>
+                </div>
+        </section>
+        
+        <hr class="w-100">
+        <nav class="m-2 w-100 rflex-center-between">
+            <span></span>
+            <div class="d-flex flex-column border border-3 border-white rounded-3 p-2" :style="{ visibility: authenticator_name==brand_name ? 'hidden' : 'visible' }">
+                <span class="fs-6">即將授權給</span>
+                <span class="fs-2">{{ brand_name }}</span>
+            </div>
+            <div class="fs-4">
+                <button type="button" class="btn btn-primary m-2" :disabled="!changed" @click="updateAccount">儲存</button>
+                <button type="button" class="btn btn-success m-2" :style="{ display: auth_code=='none' ? 'none' : 'inline-block' }" onclick="location.href = AuthApp.BACKEND_HOST + '/redirect.pye' + location.search;">繼續</button>
+            </div>
+        </nav>
+    </main>
+    <script type="x-template" id="menu-item">
+        <template v-for="i in item">
+            <li v-if="i.children" class="">
+                <button class="btn btn-toggle align-items-center rounded" data-bs-toggle="collapse"
+                    :data-bs-target="'#' + i.name + '-collapse'" aria-expanded="true">
+                    {{ i.display }}
+                </button>
+                <div class="collapse" :id="i.name + '-collapse'">
+                    <ul class="btn-toggle-nav fw-normal small">
+                        <menu-item :item="i.children" :now_page="now_page"></menu-item>
+                    </ul>
+                </div>
+            </li>
+            <li v-else class="">
+                <a href="#" class="btn rounded"
+                    @click="now_page.value = i.name" :class="{ active: now_page.value === i.name }">
+                    {{ i.display }}
+                </a>
+            </li>
+        </template>
+    </script>
+    <script type="text/javascript">
+        AuthApp.requestClient();
+
+        const settings_vue = Vue.createApp({
+            data () {
+                return {
+                    authenticator_name: AuthApp.default_client_name,
+                    brand_name: AuthApp.client_name,
+                    auth_code: AuthApp.authID,
+                    account: AuthApp.account,
+                    gender_basic: gender_basic,
+                    displayGenderOther: displayGenderOther,
+                    pages: [
+                        { name: 'general', display: '一般' },
+                        { name: 'security', display: '安全性', children: [
+                            { name: 'security_password', display: '密碼' },
+                            { name: 'security_account', display: '帳戶' }
+                        ] },
+                        { name: 'link', display: '連結' }
+                    ],
+                    now_page: { value: 'general' },
+                    role: '',
+                    user_id: '',
+                    valid_email: '',
+                    google_id: '',
+                    settings: {
+                        loginid: {
+                            label: '帳號（學號／員工編號）',
+                            value: '',
+                            new_value: ''
+                        },
+                        name: {
+                            label: '姓名',
+                            value: '',
+                            new_value: ''
+                        },
+                        email: {
+                            label: '電子郵件',
+                            value: '',
+                            new_value: ''
+                        },
+                        gender: {
+                            label: '性別',
+                            value: '',
+                            new_value: ''
+                        },
+                        department: {
+                            label: '系所／單位',
+                            value: '',
+                            new_value: ''
+                        },
+                        grade: {
+                            label: '年級／職稱',
+                            value: '',
+                            new_value: ''
+                        },
+                        photo: {
+                            label: '圖片',
+                            value: '',
+                            new_value: ''
+                        }
+                    }
+                }
+            },
+            computed: {
+                changed () {
+                    for (let key in this.settings) {
+                        if (this.settings[key].value !== this.settings[key].new_value) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+            },
+            methods: {
+                getAccount() {
+                    AuthApp.requestAccount(() => {
+                        this.role = this.account.role;
+                        this.user_id = this.account.user_ID;
+                        this.valid_email = this.account.valid_email;
+                        this.google_id = this.account.google_ID;
+                        this.settings.loginid.value = this.account.login_ID;
+                        this.settings.name.value = this.account.name;
+                        this.settings.email.value = this.account.email;
+                        this.settings.gender.value = this.account.gender;
+                        this.settings.department.value = this.account.department;
+                        this.settings.grade.value = this.account.grade;
+                        this.settings.photo.value = this.account.photo;
+                        for (let key in this.settings) {
+                            this.settings[key].new_value = this.settings[key].value;
+                        }
+                    });
+                },
+                updateAccount() {
+                    const url = AuthApp.BACKEND_HOST + '/account/update.pye';
+                    const data = {
+                        id: this.user_id,
+                        login_id: this.settings.loginid.new_value,
+                        name: this.settings.name.new_value,
+                        email: this.settings.email.new_value,
+                        gender: this.settings.gender.new_value,
+                        department: this.settings.department.new_value,
+                        grade: this.settings.grade.new_value,
+                        photo: this.settings.photo.new_value
+                    };
+
+                    XHR_POST(url, data).then((data) => {
+                        this.getAccount();
+                    }).catch((error) => {
+                        console.error(error);
+                    });
+                },
+                previewImage(event) {
+                    const file = event.target.files[0];
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        this.settings.photo.new_value = e.target.result;
+                    };
+
+                    reader.readAsDataURL(file);
+                },
+                verifyEmail() {
+                    const url = AuthApp.BACKEND_HOST + '/account/verify_email.pye';
+                    const data = {
+                        email: this.settings.email.new_value
+                    };
+
+                    XHR_POST(url, data).then((data) => {
+                        this.valid_email = data.valid_email;
+                    }).catch((error) => {
+                        console.error(error);
+                    });
+                }
+            },
+            mounted() {
+                this.getAccount();
+            }
+        });
+
+        settings_vue.component('menu-item', {
+            template: '#menu-item',
+            props: {
+                item: Object,
+                now_page: Object
+            }
+        });
+
+        const settings_app = settings_vue.mount('main');
+    </script>
+    <style>
+        body {
+            background-image: url('/external/freepik/abstract-liquid-effect.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+    </style>
+</body>
+</html>

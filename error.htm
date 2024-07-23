@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Error Page</title>
+</head>
+<body>
+    <h1>Error Page</h1>
+    <div id="error-message"></div>
+
+    <script>
+        // Get the error argument from the URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const error = urlParams.get('error');
+
+        // Display the error message based on the argument
+        if (error) {
+            const errorMessage = JSON.parse(decodeURIComponent(error));
+            document.getElementById('error-message').innerText = errorMessage;
+        } else {
+            const httpStatus = urlParams.get('status');
+            document.getElementById('error-message').innerText = `HTTP Status: ${httpStatus}`;
+        }
+    </script>
+</body>
+</html>
