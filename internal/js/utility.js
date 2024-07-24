@@ -62,3 +62,13 @@ function XHR_POST(url, data) {
         xhr.send(JSON.stringify(data));
     });
 }
+
+function build_query_url(url, query={}) {
+    let query_str = "";
+    for (let key in query) {
+        query_str += `${key}=${query[key]}&`;
+    }
+    query_str = query_str.slice(0, -1);
+    
+    return `${url}?${query_str}`;
+}
