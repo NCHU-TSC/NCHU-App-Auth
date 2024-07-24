@@ -20,7 +20,7 @@
                 <li v-else class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <img v-if="user_photo" :src="user_photo" alt="user_photo" width="30" height="30" class="rounded-circle">
-                        <span v-if="user_name" class="align-middle">Hi, {{ user_name }}</span>
+                        <span v-if="user_name" class="align-middle">　Hi, {{ user_name }}</span>
                     </a>
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="/profile.htm">個人資料</a></li>
@@ -33,8 +33,8 @@
                 </li>
             </ul>
             <form class="d-flex" role="search">
-                <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-                <button class="btn btn-outline-success" type="submit">Search</button>
+                <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search" v-model="search_input">
+                <button class="btn btn-outline-success" type="button" @click="search">搜尋</button>
             </form>
         </div>
     </div>
@@ -47,12 +47,16 @@
                     client_image: AuthApp.default_client_image,
                     user_name: '',
                     user_photo: '',
-                    user_role: ''
+                    user_role: '',
+                    search_input: ''
                 }
             },
             methods: {
                 logout() {
                     location.href = build_query_url(AuthApp.BACKEND_HOST + '/logout.pye', { 'auth_id': AuthApp.authID });
+                },
+                search() {
+                    window.open('https://cse.google.com/cse?cx=31f981f167952491b&q=' + this.search_input, '_blank');
                 }
             },
             mounted() {
