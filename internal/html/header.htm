@@ -24,6 +24,9 @@
                     </a>
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="/profile.htm">個人資料</a></li>
+                        <li v-if="user_role == 'Manager'"><hr class="dropdown-divider"></li>
+                        <li v-if="user_role == 'Manager'"><a class="dropdown-item" href="/manage/account.htm">管理所有帳戶</a></li>
+                        <li v-if="user_role == 'Manager'"><a class="dropdown-item" href="/manage/client.htm">管理所有授權端</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="#" @click="logout">登出</a></li>
                     </ul>
@@ -43,7 +46,8 @@
                     client_name: AuthApp.default_client_name,
                     client_image: AuthApp.default_client_image,
                     user_name: '',
-                    user_photo: ''
+                    user_photo: '',
+                    user_role: ''
                 }
             },
             methods: {
@@ -56,6 +60,7 @@
                     AuthApp.requestAccount(() => {
                         this.user_name = AuthApp.account.name;
                         this.user_photo = AuthApp.account.photo;
+                        this.user_role = AuthApp.account.role;
                     });
                 }
             }
