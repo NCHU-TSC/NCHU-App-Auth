@@ -19,12 +19,12 @@
     <script type="text/javascript" src="/internal/js/define.js"></script>
 </head>
 
-<body class="cflex-center-center h-100">
+<body class="d-flex flex-column h-100">
     <header id="header-home">
         <script>$("#header-home").load("/internal/html/header.htm");</script>
     </header>
     
-    <main class="main cflex-center-center p-5">
+    <main class="flex-grow-1 main cflex-center-center p-5">
         <nav class="m-2 w-100 rflex-center-between">
             <span class="fs-1">設定</span>
             <div>
@@ -270,13 +270,13 @@
                     reader.readAsDataURL(file);
                 },
                 verifyEmail() {
-                    const url = AuthApp.BACKEND_HOST + '/account/verify_email.pye';
+                    const url = AuthApp.BACKEND_HOST + '/account/send_email_auth_url.pye';
                     const data = {
                         email: this.settings.email.new_value
                     };
 
                     XHR_POST(url, data).then((data) => {
-                        this.valid_email = data.valid_email;
+                        this.valid_email = data.data.valid_email;
                     }).catch((error) => {
                         console.error(error);
                     });
