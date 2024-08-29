@@ -70,39 +70,114 @@
                             <p class="text-center fw-bold mx-3 mb-0">或</p>
                         </div>
     
-                        <!-- Email input -->
-                        <div class="form-floating mb-4">
-                            <input type="email" id="loginid" class="form-control form-control-lg" placeholder="Enter a valid email address" />
-                            <label class="form-label" for="loginid">電子郵件／學號</label>
-                        </div>
-    
-                        <!-- Password input -->
-                        <div class="form-floating mb-3">
-                            <input type="password" id="password" class="form-control form-control-lg" placeholder="Enter password" />
-                            <label class="form-label" for="password">密碼</label>
-                        </div>
-    
-                        <div class="d-flex justify-content-between align-items-center">
-                            <!-- Checkbox -->
-                            <div class="form-check mb-0">
-                                <input class="form-check-input me-2" type="checkbox" value="" id="remember" />
-                                <label class="form-check-label" for="remember">記住我</label>
+                        <div id="login-control">
+                            <!-- Email input -->
+                            <div class="form-floating mb-4">
+                                <input type="email" id="loginid" class="form-control form-control-lg" placeholder="Enter a valid email address" v-model.trim="loginid" />
+                                <label class="form-label" for="loginid">電子郵件／學號</label>
                             </div>
-                            <a href="#" onclick="location.href = 'forget.htm' + location.search; return false;" class="text-body">忘記密碼？</a>
-                        </div>
-    
-                        <div class="text-center text-lg-start mt-4 pt-2">
-                            <button type="button" class="btn btn-primary btn-lg" style="padding-left: 2.5rem; padding-right: 2.5rem;"
-                                onclick="login($('#loginid').val(), $('#password').val(), $('#remember').is(':checked'))">登入</button>
-                            <p class="small fw-bold mt-2 pt-1 mb-0">沒有帳號嗎？
-                                <a href="#" onclick="location.href = 'register.htm' + location.search; return false;" class="link-danger">註冊</a>
-                            </p>
+        
+                            <!-- Password input -->
+                            <div class="form-floating mb-3">
+                                <input type="password" id="password" class="form-control form-control-lg" placeholder="Enter password" v-model="password" />
+                                <label class="form-label" for="password">密碼</label>
+                            </div>
+
+                            <!-- Confirm password -->
+                            <div v-if="isSignup" class="form-floating mb-3">
+                                <input type="password" id="confirm" class="form-control form-control-lg" placeholder="Enter password again" v-model.lazy="confirm" />
+                                <label class="form-label" for="confirm">確認密碼</label>
+                                <p v-if="confirm !== '' && password !== confirm" class="text-danger">密碼不一致</p>
+                            </div>
+        
+                            <div v-if="!isSignup" class="d-flex justify-content-between align-items-center">
+                                <!-- Checkbox -->
+                                <div class="form-check mb-0">
+                                    <input class="form-check-input me-2" type="checkbox" value="" id="remember" v-model="remember" />
+                                    <label class="form-check-label" for="remember">記住我</label>
+                                </div>
+                                <a href="/forget.htm" class="text-body">忘記密碼？</a>
+                            </div>
+        
+                            <!--
+                            <div class="text-center text-lg-start mt-4 pt-2">
+                                <button type="button" class="btn btn-primary btn-lg" style="padding-left: 2.5rem; padding-right: 2.5rem;"
+                                    onclick="login($('#loginid').val(), $('#password').val(), $('#remember').is(':checked'))">登入</button>
+                                <p class="small fw-bold mt-2 pt-1 mb-0">沒有帳號嗎？
+                                    <a href="#" onclick="location.href = 'register.htm' + location.search; return false;" class="link-danger">註冊</a>
+                                </p>
+                            </div>
+                            -->
+                            <div v-if="isSignup" class="d-flex justify-content-between align-items-center mt-4 pt-2">
+                                <button type="button" class="btn btn-primary btn-lg" style="padding-left: 2.5rem; padding-right: 2.5rem;"
+                                    @click="signup">註冊</button>
+                                <p class="small fw-bold mt-2 pt-1 mb-0">已經有帳號了？
+                                    <a href="#" @click="toggleSignup" class="text-body">登入</a>
+                                </p>
+                            </div>
+                            <div v-else class="d-flex justify-content-between align-items-center mt-4 pt-2">
+                                <button type="button" class="btn btn-primary btn-lg" style="padding-left: 2.5rem; padding-right: 2.5rem;"
+                                    @click="login">登入</button>
+                                <p class="small fw-bold mt-2 pt-1 mb-0">沒有帳號嗎？
+                                    <a href="#" @click="toggleSignup" class="text-body">註冊</a>
+                                </p>
+                            </div>
                         </div>
                     </form>
                 </div>
             </div>
         </section>
     </main>
+
+    <script type="text/javascript">
+        const login_vue = Vue.createApp({
+            data() {
+                return {
+                    loginid: '',
+                    password: '',
+                    confirm: '',
+                    remember: false,
+                    isSignup: false
+                }
+            },
+            methods: {
+                login() {
+                    const url = AuthApp.BACKEND_HOST + '/login.pye';
+                    const data = {
+                        acccount: this.loginid,
+                        password: this.password,
+                        remember: this.remember
+                    };
+
+                    XHR_POST(url, data).then((data) => {
+                        window.location.href = '/profile.htm' + location.search;
+                    }).catch((error) => {
+                        console.error(error);
+                    });
+                },
+                signup() {
+                    if (this.password !== this.confirm) {
+                        return;
+                    }
+
+                    const url = AuthApp.BACKEND_HOST + '/signup.pye';
+                    const data = {
+                        loginid: this.loginid,
+                        password: this.password
+                    };
+
+                    XHR_POST(url, data).then((data) => {
+                        window.location.href = '/profile.htm' + location.search;
+                    }).catch((error) => {
+                        console.error(error);
+                    });
+                },
+                toggleSignup() {
+                    this.isSignup = !this.isSignup;
+                }
+            }
+        }).mount('#login-control');
+    </script>
 
     <footer id="footer-home">
         <script>$("#footer-home").load("/internal/html/footer.htm");</script>
